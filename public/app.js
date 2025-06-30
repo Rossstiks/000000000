@@ -28,6 +28,9 @@ function Section({ type, label }) {
         <div className="mt-4">
           <h3 className="font-bold">Тэги: {result.tags.join(', ')}</h3>
           <p className="mt-2 italic">{result.aiResponse}</p>
+          {result.file && (
+            <p className="text-sm mt-1">Файл сохранён как: <a className="text-blue-600 underline" href={`/uploads/${result.file.filename}`} target="_blank" rel="noopener noreferrer">{result.file.originalname}</a></p>
+          )}
           {result.pages && result.pages.map(p => (
             <div key={p.id} className="mt-4 p-2 border rounded" dangerouslySetInnerHTML={{ __html: p.content }} />
           ))}

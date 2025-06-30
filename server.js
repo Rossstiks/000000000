@@ -1,11 +1,26 @@
 const express = require('express');
 const app = express();
 const multer = require('multer');
-const upload = multer();
+const path = require('path');
+const fs = require('fs');
+
+// configure disk storage for uploaded files
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, 'uploads'));
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + file.originalname;
+    cb(null, unique);
+  }
+});
+
+const upload = multer({ storage });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const PORT = process.env.PORT || 3000;
 
@@ -43,7 +58,16 @@ app.post('/api/analyze', upload.single('file'), (req, res) => {
   const { tags, aiResponse } = fakeGeminiResponse(text || '');
   // search pages by tags and type
   const found = pages.filter(p => p.id.startsWith(type) && p.tags.some(t => tags.includes(t)));
-  res.json({ tags, aiResponse, pages: found });
+  const fileInfo = req.file ? { filename: req.file.filename, originalname: req.file.originalname } : null;
+  res.json({ tags, aiResponse, pages: found, file: fileInfo });
+});
+
+// list uploaded files
+app.get('/api/files', (req, res) => {
+  fs.readdir(path.join(__dirname, 'uploads'), (err, files) => {
+    if (err) return res.status(500).json({ error: 'Cannot read uploads' });
+    res.json({ files });
+  });
 });
 
 app.listen(PORT, () => {
