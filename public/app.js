@@ -1,4 +1,4 @@
-const { useState } = React;
+const { useState, useEffect } = React;
 
 function Section({ type, label }) {
   const [text, setText] = useState('');
@@ -40,12 +40,40 @@ function Section({ type, label }) {
   );
 }
 
+function FilesList() {
+  const [files, setFiles] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/files')
+      .then(res => res.json())
+      .then(data => setFiles(data.files || []));
+  }, []);
+
+  return (
+    <div className="mt-8 border p-4 bg-white rounded shadow">
+      <h2 className="text-xl font-semibold mb-2">Загруженные документы</h2>
+      {files.length === 0 ? (
+        <p className="text-gray-500">Нет загруженных документов</p>
+      ) : (
+        <ul className="list-disc pl-5 space-y-1">
+          {files.map(f => (
+            <li key={f}>
+              <a className="text-blue-600 underline" href={`/uploads/${f}`} target="_blank" rel="noopener noreferrer">{f}</a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function App() {
   return (
     <div>
       <Section type="civil" label="Гражданское судопроизводство" />
       <Section type="criminal" label="Уголовное судопроизводство" />
       <Section type="admin" label="Административное судопроизводство" />
+      <FilesList />
     </div>
   );
 }
