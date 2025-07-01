@@ -53,13 +53,30 @@ function fakeGeminiResponse(text) {
   return { tags, aiResponse };
 }
 
+function fakeExtractData(content) {
+  const nameMatch = content.match(/ФИО[:\s]+([\w\s]+)/i);
+  const dateMatch = content.match(/(\d{2}\.\d{2}\.\d{4})/);
+  return {
+    name: nameMatch ? nameMatch[1].trim() : null,
+    date: dateMatch ? dateMatch[1] : null,
+  };
+}
+
 app.post('/api/analyze', upload.single('file'), (req, res) => {
   const { text, type } = req.body;
   const { tags, aiResponse } = fakeGeminiResponse(text || '');
   // search pages by tags and type
   const found = pages.filter(p => p.id.startsWith(type) && p.tags.some(t => tags.includes(t)));
-  const fileInfo = req.file ? { filename: req.file.filename, originalname: req.file.originalname } : null;
-  res.json({ tags, aiResponse, pages: found, file: fileInfo });
+  let fileInfo = null;
+  let extracted = null;
+  if (req.file) {
+    fileInfo = { filename: req.file.filename, originalname: req.file.originalname };
+    if (req.file.mimetype === 'text/plain') {
+      const fileContent = fs.readFileSync(req.file.path, 'utf8');
+      extracted = fakeExtractData(fileContent);
+    }
+  }
+  res.json({ tags, aiResponse, pages: found, file: fileInfo, extracted });
 });
 
 // list uploaded files
