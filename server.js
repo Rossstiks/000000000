@@ -46,6 +46,18 @@ const pages = [
   }
 ];
 
+// return list of pages or single page by id
+app.get('/api/pages', (req, res) => {
+  const { id } = req.query;
+  if (id) {
+    const page = pages.find(p => p.id === id);
+    if (!page) return res.status(404).json({ error: 'Not found' });
+    return res.json({ page });
+  }
+  const list = pages.map(p => ({ id: p.id, title: p.title }));
+  res.json({ pages: list });
+});
+
 function fakeGeminiResponse(text) {
   const words = text.split(/\s+/).filter(Boolean);
   const tags = words.slice(0, 3); // simplistic tag generation
