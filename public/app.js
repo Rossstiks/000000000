@@ -1,4 +1,5 @@
 const { useState, useEffect } = React;
+const { BrowserRouter, Routes, Route, Link, useParams } = ReactRouterDOM;
 
 function Section({ type, label }) {
   const [text, setText] = useState('');
@@ -17,7 +18,7 @@ function Section({ type, label }) {
   };
 
   return (
-    <div className="mb-8 border p-4 bg-white rounded shadow">
+    <div className="border p-4 bg-white rounded shadow">
       <h2 className="text-xl font-semibold mb-2">{label}</h2>
       <form onSubmit={handleSubmit} className="space-y-2">
         <textarea className="w-full border rounded p-2" rows="3" placeholder="Введите задание" value={text} onChange={e => setText(e.target.value)}></textarea>
@@ -76,14 +77,85 @@ function FilesList() {
   );
 }
 
-function App() {
+function UploadPage() {
+  return <Section type="general" label="Загрузка документа" />;
+}
+
+function PagesList() {
+  const [pages, setPages] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/pages')
+      .then(res => res.json())
+      .then(data => setPages(data.pages || []));
+  }, []);
+
+  return (
+    <div className="border p-4 bg-white rounded shadow">
+      <h2 className="text-xl font-semibold mb-2">Шаблоны</h2>
+      <ul className="list-disc pl-5 space-y-1">
+        {pages.map(p => (
+          <li key={p.id}>
+            <Link className="text-blue-600 underline" to={`/pages/${p.id}`}>{p.title}</Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PageView() {
+  const { id } = useParams();
+  const [page, setPage] = useState(null);
+
+  useEffect(() => {
+    fetch(`/api/pages?id=${id}`)
+      .then(res => res.json())
+      .then(data => setPage(data.page || null));
+  }, [id]);
+
+  if (!page) return <p className="p-4">Загрузка...</p>;
+  return (
+    <div className="border p-4 bg-white rounded shadow" dangerouslySetInnerHTML={{ __html: page.content }} />
+  );
+}
+
+function MainPage() {
+  const [active, setActive] = useState('civil');
   return (
     <div>
-      <Section type="civil" label="Гражданское судопроизводство" />
-      <Section type="criminal" label="Уголовное судопроизводство" />
-      <Section type="admin" label="Административное судопроизводство" />
+      <div className="flex space-x-2 mb-4">
+        <button onClick={() => setActive('civil')} className={`px-4 py-2 rounded ${active === 'civil' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Гражданское</button>
+        <button onClick={() => setActive('criminal')} className={`px-4 py-2 rounded ${active === 'criminal' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Уголовное</button>
+        <button onClick={() => setActive('admin')} className={`px-4 py-2 rounded ${active === 'admin' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>Административное</button>
+        <Link to="/upload" className="ml-auto px-4 py-2 bg-green-600 text-white rounded">Загрузить документ</Link>
+      </div>
+      {active === 'civil' && <Section type="civil" label="Гражданское судопроизводство" />}
+      {active === 'criminal' && <Section type="criminal" label="Уголовное судопроизводство" />}
+      {active === 'admin' && <Section type="admin" label="Административное судопроизводство" />}
+      <div className="mt-4">
+        <Link className="text-blue-600 underline" to="/pages">Перейти к шаблонам</Link>
+      </div>
       <FilesList />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <nav className="p-4 bg-gray-200 flex space-x-4 mb-4">
+        <Link to="/" className="text-blue-600">Главная</Link>
+        <Link to="/upload" className="text-blue-600">Загрузить документ</Link>
+        <Link to="/pages" className="text-blue-600">Шаблоны</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<MainPage />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/pages" element={<PagesList />} />
+        <Route path="/pages/:id" element={<PageView />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
