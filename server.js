@@ -63,8 +63,14 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
   const filePath = req.file ? req.file.path : null;
   const { tags, aiResponse, extracted } = await analyze({ text: text || '', filePath });
 
-  // search pages by tags and type
-  const found = pages.filter(p => p.id.startsWith(type) && p.tags.some(t => tags.includes(t)));
+  // search pages by tags and content matches
+  const words = (text || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const found = pages.filter(p => {
+    if (!p.id.startsWith(type)) return false;
+    const tagMatch = p.tags.some(t => tags.includes(t));
+    const contentMatch = words.some(w => p.content.toLowerCase().includes(w));
+    return tagMatch || contentMatch;
+  });
   let fileInfo = null;
   if (req.file) {
     fileInfo = { filename: req.file.filename, originalname: req.file.originalname };
