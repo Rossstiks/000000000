@@ -28,6 +28,33 @@ class WPLegalAssistant {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
+    public static function activate() {
+        // create page with shortcode if not exists
+        $page = get_page_by_path('legal-assistant-home');
+        if (!$page) {
+            $page_id = wp_insert_post([
+                'post_title'   => 'Legal Assistant',
+                'post_name'    => 'legal-assistant-home',
+                'post_content' => '[legal_assistant]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ]);
+        } else {
+            $page_id = $page->ID;
+            if (strpos($page->post_content, '[legal_assistant]') === false) {
+                wp_update_post([
+                    'ID'           => $page_id,
+                    'post_content' => $page->post_content . "\n[legal_assistant]"
+                ]);
+            }
+        }
+
+        if ($page_id && get_option('page_on_front') != $page_id) {
+            update_option('show_on_front', 'page');
+            update_option('page_on_front', $page_id);
+        }
+    }
+
     private function load_db() {
         return json_decode(file_get_contents($this->db_file), true);
     }
@@ -177,3 +204,5 @@ class WPLegalAssistant {
 }
 
 new WPLegalAssistant();
+
+register_activation_hook(__FILE__, ['WPLegalAssistant', 'activate']);

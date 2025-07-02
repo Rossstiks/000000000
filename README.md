@@ -25,4 +25,4 @@
 
 ## WordPress
 
-В папке `wp-legal-assistant` находится модуль для WordPress. Активируйте плагин и добавьте шорткод `[legal_assistant]` на странице. REST-маршруты доступны по префиксу `/wp-json/legal-assistant/v1`.
+В папке `wp-legal-assistant` находится модуль для WordPress. После активации плагин создаёт страницу с шорткодом `[legal_assistant]` и назначает её главной. REST-маршруты доступны по префиксу `/wp-json/legal-assistant/v1`.
