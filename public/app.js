@@ -120,6 +120,43 @@ function PageView() {
   );
 }
 
+function DocumentForm() {
+  const [name, setName] = useState('');
+  const [date, setDate] = useState('');
+  const [text, setText] = useState('');
+  const [file, setFile] = useState(null);
+  const [aiResponse, setAiResponse] = useState(null);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('text', text);
+    formData.append('type', 'general');
+    if (file) formData.append('file', file);
+    const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+    const data = await res.json();
+    setAiResponse(data.aiResponse);
+    if (data.extracted) {
+      if (data.extracted.name) setName(data.extracted.name);
+      if (data.extracted.date) setDate(data.extracted.date);
+    }
+  };
+
+  return (
+    <div className="border p-4 bg-white rounded shadow space-y-2">
+      <h2 className="text-xl font-semibold mb-2">Форма документа</h2>
+      <form onSubmit={handleSubmit} className="space-y-2">
+        <input type="text" className="w-full border p-2" placeholder="ФИО" value={name} onChange={e => setName(e.target.value)} />
+        <input type="text" className="w-full border p-2" placeholder="Дата" value={date} onChange={e => setDate(e.target.value)} />
+        <textarea className="w-full border p-2" rows="3" placeholder="Описание" value={text} onChange={e => setText(e.target.value)}></textarea>
+        <input type="file" onChange={e => setFile(e.target.files[0])} className="block" />
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Заполнить</button>
+      </form>
+      {aiResponse && <p className="mt-2 italic">{aiResponse}</p>}
+    </div>
+  );
+}
+
 function MainPage() {
   const [active, setActive] = useState('civil');
   return (
@@ -147,11 +184,13 @@ function App() {
       <nav className="p-4 bg-gray-200 flex space-x-4 mb-4">
         <Link to="/" className="text-blue-600">Главная</Link>
         <Link to="/upload" className="text-blue-600">Загрузить документ</Link>
+        <Link to="/form" className="text-blue-600">Форма</Link>
         <Link to="/pages" className="text-blue-600">Шаблоны</Link>
       </nav>
       <Routes>
         <Route path="/" element={<MainPage />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/form" element={<DocumentForm />} />
         <Route path="/pages" element={<PagesList />} />
         <Route path="/pages/:id" element={<PageView />} />
       </Routes>
